@@ -9,13 +9,40 @@ if (!process.env.DATABASE_URL) {
   console.error('Please add DATABASE_URL to your .env or Railway variables');
 }
 
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: { rejectUnauthorized: false },
-  max: 10,
-  idleTimeoutMillis: 30000,
-  connectionTimeoutMillis: 5000,
-});
+// Parse DATABASE_URL and handle special characters
+let poolConfig;
+try {
+  // Create pool with DATABASE_URL
+  poolConfig = {
+    connectionString: process.env.DATABASE_URL,
+    ssl: { rejectUnauthorized: false },
+    max: 10,
+    idleTimeoutMillis: 30000,
+    connectionTimeoutMillis: 10000,
+  };
+  
+  // Remove sslmode from connection string if present, handle it separately
+  if (poolConfig.connectionString && poolConfig.connectionString.includes('?')) {
+    const url = new URL(poolConfig.connectionString.replace('postgres://', 'postgresql://'));
+    const sslmode = url.searchParams.get('sslmode');
+    if (sslmode) {
+      url.searchParams.delete('sslmode');
+      poolConfig.connectionString = url.toString().replace('postgresql://', 'postgres://');
+    }
+  }
+} catch (err) {
+  console.error('Failed to parse DATABASE_URL:', err.message);
+  console.log('Using raw DATABASE_URL:', process.env.DATABASE_URL);
+  poolConfig = {
+    connectionString: process.env.DATABASE_URL,
+    ssl: { rejectUnauthorized: false },
+    max: 10,
+    idleTimeoutMillis: 30000,
+    connectionTimeoutMillis: 10000,
+  };
+}
+
+const pool = new Pool(poolConfig);
 
 pool.on('connect', () => {
   console.log('✓ PostgreSQL pool connected');
