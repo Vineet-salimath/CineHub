@@ -78,8 +78,10 @@ router.post('/register', async (req, res) => {
       },
     });
   } catch (error) {
-    console.error('Register error:', error);
-    res.status(500).json({ error: 'Server error during registration' });
+    console.error('Register error - Full Details:', error);
+    console.error('Error message:', error.message);
+    console.error('Error stack:', error.stack);
+    res.status(500).json({ error: 'Server error during registration', details: error.message });
   }
 });
 
@@ -130,8 +132,10 @@ router.post('/login', async (req, res) => {
       },
     });
   } catch (error) {
-    console.error('Login error:', error);
-    res.status(500).json({ error: 'Server error during login' });
+    console.error('Login error - Full Details:', error);
+    console.error('Error message:', error.message);
+    console.error('Error stack:', error.stack);
+    res.status(500).json({ error: 'Server error during login', details: error.message });
   }
 });
 
@@ -157,8 +161,9 @@ router.get('/profile', authMiddleware, async (req, res) => {
       },
     });
   } catch (error) {
-    console.error('Profile error:', error);
-    res.status(500).json({ error: 'Server error fetching profile' });
+    console.error('Profile error - Full Details:', error);
+    console.error('Error message:', error.message);
+    res.status(500).json({ error: 'Server error fetching profile', details: error.message });
   }
 });
 
