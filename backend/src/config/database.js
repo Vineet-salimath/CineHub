@@ -4,43 +4,31 @@ const { Pool } = require('pg');
 // Allow self-signed certs for Aiven cloud database
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 
-if (!process.env.DATABASE_URL) {
-  console.error('❌ CRITICAL: DATABASE_URL environment variable is not set!');
-  console.error('Please add DATABASE_URL to your .env or Railway variables');
-}
+// Log connection info for debugging
+console.log('Attempting to connect to PostgreSQL...');
+console.log('Host:', process.env.DB_HOST || 'from DATABASE_URL');
+console.log('Port:', process.env.DB_PORT || '25673');
+console.log('Database:', process.env.DB_NAME || 'defaultdb');
 
-// Parse DATABASE_URL and handle special characters
-let poolConfig;
-try {
-  // Create pool with DATABASE_URL
-  poolConfig = {
-    connectionString: process.env.DATABASE_URL,
-    ssl: { rejectUnauthorized: false },
-    max: 10,
-    idleTimeoutMillis: 30000,
-    connectionTimeoutMillis: 10000,
-  };
-  
-  // Remove sslmode from connection string if present, handle it separately
-  if (poolConfig.connectionString && poolConfig.connectionString.includes('?')) {
-    const url = new URL(poolConfig.connectionString.replace('postgres://', 'postgresql://'));
-    const sslmode = url.searchParams.get('sslmode');
-    if (sslmode) {
-      url.searchParams.delete('sslmode');
-      poolConfig.connectionString = url.toString().replace('postgresql://', 'postgres://');
+const poolConfig = process.env.DATABASE_URL 
+  ? {
+      connectionString: process.env.DATABASE_URL,
+      ssl: { rejectUnauthorized: false },
+      max: 10,
+      idleTimeoutMillis: 30000,
+      connectionTimeoutMillis: 10000,
     }
-  }
-} catch (err) {
-  console.error('Failed to parse DATABASE_URL:', err.message);
-  console.log('Using raw DATABASE_URL:', process.env.DATABASE_URL);
-  poolConfig = {
-    connectionString: process.env.DATABASE_URL,
-    ssl: { rejectUnauthorized: false },
-    max: 10,
-    idleTimeoutMillis: 30000,
-    connectionTimeoutMillis: 10000,
-  };
-}
+  : {
+      host: process.env.DB_HOST || 'pg-4b8d63d-cinehub.b.aivencloud.com',
+      port: parseInt(process.env.DB_PORT || '25673'),
+      database: process.env.DB_NAME || 'defaultdb',
+      user: process.env.DB_USER || 'avnadmin',
+      password: process.env.DB_PASSWORD || '',
+      ssl: { rejectUnauthorized: false },
+      max: 10,
+      idleTimeoutMillis: 30000,
+      connectionTimeoutMillis: 10000,
+    };
 
 const pool = new Pool(poolConfig);
 
@@ -50,7 +38,7 @@ pool.on('connect', () => {
 
 pool.on('error', (err) => {
   console.error('PostgreSQL pool error:', err.message);
-  console.error('Details:', err);
+  console.error('Error code:', err.code);
 });
 
 // Create users table if it doesn't exist
