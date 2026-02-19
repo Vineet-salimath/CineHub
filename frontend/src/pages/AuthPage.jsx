@@ -230,12 +230,7 @@ export default function AuthPage({ onLoginSuccess }) {
           </div>
         </div>
 
-        {/* Trust badges */}
-        <div className="auth-trust">
-          {['🔒 Bank-grade Security', '🎬 10,000+ Titles', '⭐ 4K HDR Streaming', '🌐 Multi-device'].map(b => (
-            <span key={b} className="trust-badge">{b}</span>
-          ))}
-        </div>
+
       </div>
     </div>
   )
